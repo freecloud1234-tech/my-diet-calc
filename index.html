@@ -14,7 +14,7 @@
         .input-section { background: #fff; border: 2px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
         input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
         .add-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .item-card { background: white; border: 1px solid #ddd; padding: 12px; border-radius: 10px; margin-bottom: 10px; position: relative; }
+        .item-card { background: white; border: 1px solid #ddd; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
         .item-row { display: flex; justify-content: space-between; align-items: flex-start; }
         .item-data { font-size: 13px; color: #666; margin-top: 5px; }
         .edit-input { width: 60px !important; padding: 4px !important; display: inline-block !important; margin: 0 2px !important; font-size: 12px !important; }
@@ -37,7 +37,7 @@
     </div>
 
     <div class="input-section">
-        <input type="text" id="food-name" list="food-options" placeholder="搜尋或手動輸入食物">
+        <input type="text" id="food-name" list="food-options" placeholder="🔍 搜尋或輸入新食物名稱">
         <datalist id="food-options"></datalist>
         <div style="display: flex; gap: 5px;">
             <input type="number" id="food-amount" placeholder="數量" style="flex:2">
@@ -47,58 +47,70 @@
                 <option value="碗">碗(200g)</option>
             </select>
         </div>
-        <button class="add-btn" onclick="addItem()">確認加入紀錄</button>
+        <button class="add-btn" onclick="addItem()">確認加入今日紀錄</button>
     </div>
 
-    <h3 style="border-left: 4px solid #1a73e8; padding-left: 10px;">📋 已加入明細</h3>
+    <h3 style="border-left: 4px solid #1a73e8; padding-left: 10px;">📋 今日明細紀錄</h3>
     <div id="log-list"></div>
 
-    <button onclick="clearAll()" style="margin-top:20px; background:#666; color:white; font-size: 13px;">🗑 關閉並清除今日所有資料</button>
+    <button onclick="clearDaily()" style="margin-top:20px; background:#666; color:white; font-size: 13px;">🗑 清除今日紀錄 (保留自訂食物庫)</button>
 </div>
 
 <script>
-    const FOOD_DB = {
+    // 預設內建數據
+    const INITIAL_DB = {
         "荷包蛋": [106, 7, 0.5], "茶葉蛋": [75, 7, 1], "水煮蛋": [75, 7, 1],
         "煎蛋吐司(去邊不加醬)": [280, 12, 35], "里肌蛋吐司(去邊不加醬)": [350, 22, 36], "肉鬆蛋吐司(去邊不加醬)": [380, 15, 42],
         "原味蛋餅": [260, 10, 30], "豬排蛋餅": [420, 22, 32], "肉鬆蛋餅": [350, 14, 38], "豬排蛋漢堡": [480, 24, 45],
         "黑胡椒鐵板麵": [650, 18, 85], "控肉掛包": [450, 18, 50], "無糖豆漿": [35, 3.5, 1],
+        "薯泥丹麥吐司": [420, 8, 55], "鮪魚沙拉丹麥吐司": [450, 16, 48], "起司蛋丹麥吐司": [400, 14, 40],
         "壽喜牛五花餐盒": [650, 28, 75], "麻婆牛五花餐盒": [700, 25, 80], "鱸魚餐盒": [550, 35, 70],
         "青蔥海鹽雞胸肉餐盒": [500, 40, 65], "五香藥膳嫩雞腿餐盒": [620, 32, 68], "打拋牛餐盒": [680, 30, 75], "火烤挪威鯖魚餐盒": [650, 30, 70],
-        "7-11蒸地瓜": [120, 1, 28], "全家烤地瓜": [120, 1, 28], "白飯": [130, 2, 28], "地瓜葉": [28, 3, 4], "高麗菜": [25, 1, 6]
+        "7-11蒸地瓜": [120, 1, 28], "全家烤地瓜": [120, 1, 28], "滷雞腿": [200, 25, 2], "滷大雞腿": [300, 35, 3],
+        "炸雞腿": [350, 22, 15], "炸大雞腿": [500, 32, 25], "豬腳": [250, 18, 1], "滷豬排": [220, 22, 5], "炸豬排": [380, 20, 25],
+        "黑米飯": [140, 3, 30], "糙米飯": [110, 2, 24], "紫米飯": [150, 3, 32], "白飯": [130, 2, 28], "五穀飯": [120, 3, 26],
+        "香蕉": [90, 1, 23], "芭樂": [40, 1, 10], "地瓜葉": [28, 3, 4], "高麗菜": [25, 1, 6]
     };
 
-    const DB_KEY = "FINAL_ULTIMATE_SAVE_V1";
-    let state = { date: new Date().toLocaleDateString(), logs: [] };
+    const DB_KEY = "PRIVATE_FOOD_DB";
+    const LOG_KEY = "PRIVATE_DAILY_LOG";
 
-    // 初始化讀取
+    let state = {
+        db: JSON.parse(localStorage.getItem(DB_KEY)) || INITIAL_DB,
+        logs: [],
+        date: new Date().toLocaleDateString()
+    };
+
     function init() {
-        const saved = localStorage.getItem(DB_KEY);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            // 只有當日期相同時才叫出資料，若是隔天則不叫出（達成隔天清空）
-            if (parsed.date === state.date) {
-                state.logs = parsed.logs;
-            }
+        // 讀取今日紀錄
+        const savedLog = localStorage.getItem(LOG_KEY);
+        if (savedLog) {
+            const parsed = JSON.parse(savedLog);
+            if (parsed.date === state.date) state.logs = parsed.logs;
         }
-        
-        const dl = document.getElementById('food-options');
-        dl.innerHTML = Object.keys(FOOD_DB).map(n => `<option value="${n}">`).join("");
+        updateDatalist();
         render();
     }
 
     function save() {
-        localStorage.setItem(DB_KEY, JSON.stringify(state));
+        localStorage.setItem(DB_KEY, JSON.stringify(state.db));
+        localStorage.setItem(LOG_KEY, JSON.stringify({ date: state.date, logs: state.logs }));
     }
 
     function addItem() {
-        const name = document.getElementById('food-name').value;
+        const name = document.getElementById('food-name').value.trim();
         const amount = parseFloat(document.getElementById('food-amount').value);
         const unit = document.getElementById('food-unit').value;
-        
-        if (!name || isNaN(amount)) return alert("請輸入完整資料");
 
-        // 若資料庫沒有，預設為0，讓使用者後續修改
-        const base = FOOD_DB[name] || [0, 0, 0];
+        if (!name || isNaN(amount)) return alert("請輸入食物名稱與數量");
+
+        // 自動學習機制：如果名稱不在資料庫，先以 0 建立，方便稍後修改
+        if (!state.db[name]) {
+            state.db[name] = [0, 0, 0];
+            updateDatalist();
+        }
+
+        const base = state.db[name];
         let ratio = (unit === "碗") ? amount * 2 : (unit === "g" ? amount / 100 : amount);
 
         state.logs.push({
@@ -111,7 +123,9 @@
             cb: (base[2] * ratio).toFixed(1),
             isEditing: false
         });
-        save(); render();
+
+        save();
+        render();
         document.getElementById('food-name').value = "";
         document.getElementById('food-amount').value = "";
     }
@@ -128,14 +142,10 @@
                 list.innerHTML += `
                 <div class="item-card">
                     <b>編輯：${item.name}</b><br>
-                    <div style="margin-top:10px;">
-                        卡路里: <input type="number" class="edit-input" id="e-c-${index}" value="${item.c}">
-                        蛋白: <input type="number" class="edit-input" id="e-p-${index}" value="${item.p}"><br>
-                        碳水: <input type="number" class="edit-input" id="e-cb-${index}" value="${item.cb}">
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn-sm btn-save" onclick="saveEdit(${index})">✅ 完成儲存</button>
-                    </div>
+                    卡: <input type="number" class="edit-input" id="e-c-${index}" value="${item.c}">
+                    蛋: <input type="number" class="edit-input" id="e-p-${index}" value="${item.p}">
+                    碳: <input type="number" class="edit-input" id="e-cb-${index}" value="${item.cb}">
+                    <button class="btn-sm btn-save" onclick="saveEdit(${index})">✅ 儲存並更新庫存</button>
                 </div>`;
             } else {
                 list.innerHTML += `
@@ -143,10 +153,10 @@
                     <div class="item-row">
                         <div>
                             <b>${item.name}</b> (${item.amount}${item.unit})
-                            <div class="item-data">🔥${item.c}大卡 | P:${item.p} | C:${item.cb}</div>
+                            <div class="item-data">🔥${item.c}kcal | P:${item.p} | C:${item.cb}</div>
                         </div>
                         <div class="btn-group">
-                            <button class="btn-sm btn-edit" onclick="toggleEdit(${index})">修改數據</button>
+                            <button class="btn-sm btn-edit" onclick="toggleEdit(${index})">修改</button>
                             <button class="btn-sm btn-del" onclick="del(${index})">刪除</button>
                         </div>
                     </div>
@@ -165,22 +175,40 @@
     }
 
     function saveEdit(index) {
-        state.logs[index].c = document.getElementById(`e-c-${index}`).value;
-        state.logs[index].p = document.getElementById(`e-p-${index}`).value;
-        state.logs[index].cb = document.getElementById(`e-cb-${index}`).value;
-        state.logs[index].isEditing = false;
-        save(); render();
+        const item = state.logs[index];
+        const newC = parseFloat(document.getElementById(`e-c-${index}`).value);
+        const newP = parseFloat(document.getElementById(`e-p-${index}`).value);
+        const newCb = parseFloat(document.getElementById(`e-cb-${index}`).value);
+
+        // 更新當前紀錄
+        item.c = newC; item.p = newP; item.cb = newCb;
+        item.isEditing = false;
+
+        // 【關鍵】同時更新食物庫，下次輸入就不用重改
+        // 逆向換算：根據目前輸入的數量/單位，換算出 1 份的價值存入 DB
+        let ratio = (item.unit === "碗") ? item.amount * 2 : (item.unit === "g" ? item.amount / 100 : item.amount);
+        state.db[item.name] = [ (newC / ratio).toFixed(1), (newP / ratio).toFixed(1), (newCb / ratio).toFixed(1) ];
+
+        save();
+        render();
     }
 
     function del(index) {
         state.logs.splice(index, 1);
-        save(); render();
+        save();
+        render();
     }
 
-    function clearAll() {
-        if(confirm("確定要永久清除今天的紀錄嗎？")) {
+    function updateDatalist() {
+        const dl = document.getElementById('food-options');
+        dl.innerHTML = Object.keys(state.db).sort().map(n => `<option value="${n}">`).join("");
+    }
+
+    function clearDaily() {
+        if(confirm("確定清空今日明細？（這不會刪除你新建立的食物資料庫）")) {
             state.logs = [];
-            save(); render();
+            save();
+            render();
         }
     }
 
