@@ -1,226 +1,190 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>飲食營養筆記</title>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a73e8">
-
-<style>
-:root { --primary:#1a73e8; --bg:#f8f9fa; }
-body { font-family:-apple-system,sans-serif; background:var(--bg); margin:0; padding:15px; }
-.container { max-width:500px; margin:auto; background:#fff; padding:20px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,.1); }
-.summary { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; background:#e8f0fe; padding:15px; border-radius:10px; text-align:center; margin-top:10px; }
-.summary b { color:var(--primary); font-size:1.2em; }
-.input-box { display:flex; flex-direction:column; gap:8px; border:2px solid #ddd; padding:15px; border-radius:10px; margin-top:15px; }
-input,select,button { padding:12px; border-radius:8px; border:1px solid #ccc; font-size:16px; }
-button { background:var(--primary); color:#fff; border:none; font-weight:bold; cursor:pointer; }
-.log-item { display:flex; justify-content:space-between; border-bottom:1px dotted #ccc; padding:8px 0; }
-small { color:#555; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍎 營養紀錄器</title>
+    <style>
+        :root { --primary: #1a73e8; --bg: #f8f9fa; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .summary-card { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center; background: #e8f0fe; padding: 15px; border-radius: 12px; border: 1px solid #d2e3fc; }
+        .summary-card b { display: block; font-size: 1.3em; color: var(--primary); }
+        .input-section { background: #fff; border: 2px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        .add-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .item-card { background: white; border: 1px solid #ddd; padding: 12px; border-radius: 10px; margin-bottom: 10px; position: relative; }
+        .item-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .item-data { font-size: 13px; color: #666; margin-top: 5px; }
+        .edit-input { width: 60px !important; padding: 4px !important; display: inline-block !important; margin: 0 2px !important; font-size: 12px !important; }
+        .btn-group { display: flex; gap: 5px; margin-top: 8px; }
+        .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; cursor: pointer; border-radius: 5px; }
+        .btn-edit { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+        .btn-del { background: #fce8e6; color: #d93025; border: 1px solid #fad2cf; }
+        .btn-save { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    </style>
 </head>
-
 <body>
+
 <div class="container">
-<h2 style="text-align:center;margin:0;">🍎 飲食營養紀錄</h2>
+    <div class="header">🍎 今日飲食總覽</div>
+    
+    <div class="summary-card">
+        <div>熱量<b id="total-cal">0</b></div>
+        <div>蛋白<b id="total-pro">0</b></div>
+        <div>碳水<b id="total-carb">0</b></div>
+    </div>
 
-<input type="date" id="datePicker">
+    <div class="input-section">
+        <input type="text" id="food-name" list="food-options" placeholder="搜尋或手動輸入食物">
+        <datalist id="food-options"></datalist>
+        <div style="display: flex; gap: 5px;">
+            <input type="number" id="food-amount" placeholder="數量" style="flex:2">
+            <select id="food-unit" style="flex:1.5">
+                <option value="份">份/顆/個</option>
+                <option value="g">公克(g)</option>
+                <option value="碗">碗(200g)</option>
+            </select>
+        </div>
+        <button class="add-btn" onclick="addItem()">確認加入紀錄</button>
+    </div>
 
-<input type="number" id="calGoal" placeholder="每日熱量目標 (kcal)" style="margin-top:10px;">
+    <h3 style="border-left: 4px solid #1a73e8; padding-left: 10px;">📋 已加入明細</h3>
+    <div id="log-list"></div>
 
-<div class="summary">
-  <div>熱量<b id="total-cal">0</b></div>
-  <div>蛋白<b id="total-pro">0</b></div>
-  <div>碳水<b id="total-carb">0</b></div>
-</div>
-
-<div class="input-box">
-  <input id="food-name" list="food-options" placeholder="選擇食物">
-  <datalist id="food-options"></datalist>
-
-  <div style="display:flex;gap:5px;">
-    <input type="number" id="food-amount" placeholder="數量" style="flex:2">
-    <select id="food-unit" style="flex:1.5">
-      <option value="份">份 / 顆</option>
-      <option value="g">公克(g)</option>
-      <option value="碗">碗(200g)</option>
-    </select>
-  </div>
-
-  <button onclick="addLog()">加入紀錄</button>
-</div>
-
-<div id="log-list"></div>
+    <button onclick="clearAll()" style="margin-top:20px; background:#666; color:white; font-size: 13px;">🗑 關閉並清除今日所有資料</button>
 </div>
 
 <script>
-/* ===== 日期工具 ===== */
-const dateKey = d => {
-  const x = new Date(d);
-  return x.getFullYear() + '-' +
-    String(x.getMonth()+1).padStart(2,'0') + '-' +
-    String(x.getDate()).padStart(2,'0');
-};
+    const FOOD_DB = {
+        "荷包蛋": [106, 7, 0.5], "茶葉蛋": [75, 7, 1], "水煮蛋": [75, 7, 1],
+        "煎蛋吐司(去邊不加醬)": [280, 12, 35], "里肌蛋吐司(去邊不加醬)": [350, 22, 36], "肉鬆蛋吐司(去邊不加醬)": [380, 15, 42],
+        "原味蛋餅": [260, 10, 30], "豬排蛋餅": [420, 22, 32], "肉鬆蛋餅": [350, 14, 38], "豬排蛋漢堡": [480, 24, 45],
+        "黑胡椒鐵板麵": [650, 18, 85], "控肉掛包": [450, 18, 50], "無糖豆漿": [35, 3.5, 1],
+        "壽喜牛五花餐盒": [650, 28, 75], "麻婆牛五花餐盒": [700, 25, 80], "鱸魚餐盒": [550, 35, 70],
+        "青蔥海鹽雞胸肉餐盒": [500, 40, 65], "五香藥膳嫩雞腿餐盒": [620, 32, 68], "打拋牛餐盒": [680, 30, 75], "火烤挪威鯖魚餐盒": [650, 30, 70],
+        "7-11蒸地瓜": [120, 1, 28], "全家烤地瓜": [120, 1, 28], "白飯": [130, 2, 28], "地瓜葉": [28, 3, 4], "高麗菜": [25, 1, 6]
+    };
 
-/* ===== 食物資料庫 ===== */
-const baseDB = {
-  "荷包蛋":[106,7,0.5],
-  "茶葉蛋":[75,7,1],
-  "水煮蛋":[75,7,1],
+    const DB_KEY = "FINAL_ULTIMATE_SAVE_V1";
+    let state = { date: new Date().toLocaleDateString(), logs: [] };
 
-  "煎蛋吐司 (去邊不加醬)":[280,12,35],
-  "里肌蛋吐司 (去邊不加醬)":[350,22,36],
-  "肉鬆蛋吐司 (去邊不加醬)":[380,15,42],
+    // 初始化讀取
+    function init() {
+        const saved = localStorage.getItem(DB_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            // 只有當日期相同時才叫出資料，若是隔天則不叫出（達成隔天清空）
+            if (parsed.date === state.date) {
+                state.logs = parsed.logs;
+            }
+        }
+        
+        const dl = document.getElementById('food-options');
+        dl.innerHTML = Object.keys(FOOD_DB).map(n => `<option value="${n}">`).join("");
+        render();
+    }
 
-  "黑胡椒鐵板麵":[650,18,85],
-  "原味蛋餅":[260,10,30],
-  "豬排蛋餅":[420,22,32],
-  "肉鬆蛋餅":[350,14,38],
-  "豬排蛋漢堡":[480,24,45],
+    function save() {
+        localStorage.setItem(DB_KEY, JSON.stringify(state));
+    }
 
-  "控肉掛包":[450,18,50],
-  "無糖豆漿":[35,3.5,1],
+    function addItem() {
+        const name = document.getElementById('food-name').value;
+        const amount = parseFloat(document.getElementById('food-amount').value);
+        const unit = document.getElementById('food-unit').value;
+        
+        if (!name || isNaN(amount)) return alert("請輸入完整資料");
 
-  "薯泥丹麥吐司":[420,8,55],
-  "鮪魚沙拉丹麥吐司":[450,16,48],
-  "起司蛋丹麥吐司":[400,14,40],
+        // 若資料庫沒有，預設為0，讓使用者後續修改
+        const base = FOOD_DB[name] || [0, 0, 0];
+        let ratio = (unit === "碗") ? amount * 2 : (unit === "g" ? amount / 100 : amount);
 
-  "壽喜牛五花餐盒":[650,28,75],
-  "麻婆牛五花餐盒":[700,25,80],
-  "鱸魚餐盒":[550,35,70],
-  "青蔥海鹽雞胸肉餐盒":[500,40,65],
-  "五香藥膳嫩雞腿餐盒":[620,32,68],
-  "打拋牛餐盒":[680,30,75],
-  "火烤挪威鯖魚餐盒":[650,30,70],
+        state.logs.push({
+            id: Date.now(),
+            name: name,
+            amount: amount,
+            unit: unit,
+            c: Math.round(base[0] * ratio),
+            p: (base[1] * ratio).toFixed(1),
+            cb: (base[2] * ratio).toFixed(1),
+            isEditing: false
+        });
+        save(); render();
+        document.getElementById('food-name').value = "";
+        document.getElementById('food-amount').value = "";
+    }
 
-  "7-11蒸地瓜":[120,1,28],
-  "全家烤地瓜":[120,1,28],
+    function render() {
+        const list = document.getElementById('log-list');
+        list.innerHTML = "";
+        let tc = 0, tp = 0, tcb = 0;
 
-  "滷雞腿":[200,25,2],
-  "滷大雞腿":[300,35,3],
-  "炸雞腿":[350,22,15],
-  "炸大雞腿":[500,32,25],
-  "豬腳":[250,18,1],
-  "滷豬排":[220,22,5],
-  "炸豬排":[380,20,25],
+        state.logs.forEach((item, index) => {
+            tc += parseFloat(item.c); tp += parseFloat(item.p); tcb += parseFloat(item.cb);
+            
+            if (item.isEditing) {
+                list.innerHTML += `
+                <div class="item-card">
+                    <b>編輯：${item.name}</b><br>
+                    <div style="margin-top:10px;">
+                        卡路里: <input type="number" class="edit-input" id="e-c-${index}" value="${item.c}">
+                        蛋白: <input type="number" class="edit-input" id="e-p-${index}" value="${item.p}"><br>
+                        碳水: <input type="number" class="edit-input" id="e-cb-${index}" value="${item.cb}">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-sm btn-save" onclick="saveEdit(${index})">✅ 完成儲存</button>
+                    </div>
+                </div>`;
+            } else {
+                list.innerHTML += `
+                <div class="item-card">
+                    <div class="item-row">
+                        <div>
+                            <b>${item.name}</b> (${item.amount}${item.unit})
+                            <div class="item-data">🔥${item.c}大卡 | P:${item.p} | C:${item.cb}</div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn-sm btn-edit" onclick="toggleEdit(${index})">修改數據</button>
+                            <button class="btn-sm btn-del" onclick="del(${index})">刪除</button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        });
 
-  "白飯":[130,2,28],
-  "黑米飯":[140,3,30],
-  "糙米飯":[110,2,24],
-  "紫米飯":[150,3,32],
-  "五穀飯":[120,3,26],
+        document.getElementById('total-cal').innerText = Math.round(tc);
+        document.getElementById('total-pro').innerText = tp.toFixed(1);
+        document.getElementById('total-carb').innerText = tcb.toFixed(1);
+    }
 
-  "香蕉":[90,1,23],
-  "芭樂":[40,1,10],
-  "地瓜葉":[28,3,4],
-  "高麗菜":[25,1,6]
-};
+    function toggleEdit(index) {
+        state.logs[index].isEditing = true;
+        render();
+    }
 
-/* ===== 狀態 ===== */
-let db = JSON.parse(localStorage.getItem('DB')) || baseDB;
-let logs = JSON.parse(localStorage.getItem('LOGS')) || {};
-let currentDate = dateKey(new Date());
+    function saveEdit(index) {
+        state.logs[index].c = document.getElementById(`e-c-${index}`).value;
+        state.logs[index].p = document.getElementById(`e-p-${index}`).value;
+        state.logs[index].cb = document.getElementById(`e-cb-${index}`).value;
+        state.logs[index].isEditing = false;
+        save(); render();
+    }
 
-datePicker.value = currentDate;
+    function del(index) {
+        state.logs.splice(index, 1);
+        save(); render();
+    }
 
-/* ===== 熱量目標 ===== */
-let calGoal = localStorage.getItem('CAL_GOAL') || "";
-calGoalInput = document.getElementById('calGoal');
-calGoalInput.value = calGoal;
-calGoalInput.onchange = e => {
-  calGoal = e.target.value;
-  localStorage.setItem('CAL_GOAL', calGoal);
-};
+    function clearAll() {
+        if(confirm("確定要永久清除今天的紀錄嗎？")) {
+            state.logs = [];
+            save(); render();
+        }
+    }
 
-/* ===== 初始化 ===== */
-renderOptions();
-loadDay(currentDate);
-
-/* ===== 日期切換 ===== */
-datePicker.onchange = e => {
-  currentDate = e.target.value;
-  loadDay(currentDate);
-};
-
-function loadDay(d){
-  if(!logs[d]) logs[d] = [];
-  render();
-}
-
-function save(){
-  localStorage.setItem('LOGS', JSON.stringify(logs));
-  localStorage.setItem('DB', JSON.stringify(db));
-}
-
-/* ===== 新增紀錄 ===== */
-function addLog(){
-  const n = food-name.value;
-  const a = parseFloat(food-amount.value);
-  const u = food-unit.value;
-  if(!db[n] || !a) return alert("請選擇食物與數量");
-
-  let r = a;
-  if(u==="g") r = a/100;
-  if(u==="碗") r = a*2;
-
-  const [c,p,cb] = db[n];
-  logs[currentDate].push({
-    id:Date.now(),
-    name:n,
-    cal:Math.round(c*r),
-    pro:(p*r).toFixed(1),
-    carb:(cb*r).toFixed(1),
-    show:a+u
-  });
-
-  save(); render();
-  food-name.value=""; food-amount.value="";
-}
-
-/* ===== 顯示 ===== */
-function render(){
-  const list = document.getElementById('log-list');
-  list.innerHTML="";
-  let tc=0,tp=0,tcab=0;
-
-  logs[currentDate].forEach(i=>{
-    tc+=i.cal; tp+=+i.pro; tcab+=+i.carb;
-    list.innerHTML+=`
-    <div class="log-item">
-      <div><b>${i.name}</b> (${i.show})<br>
-      <small>🔥${i.cal} P:${i.pro} C:${i.carb}</small></div>
-      <button onclick="delLog(${i.id})">✖</button>
-    </div>`;
-  });
-
-  total-cal.textContent = tc;
-  total-pro.textContent = tp.toFixed(1);
-  total-carb.textContent = tcab.toFixed(1);
-
-  if(calGoal && tc >= calGoal){
-    alert(`⚠️ 已超過每日熱量目標 ${calGoal} kcal`);
-    calGoal = "";
-  }
-}
-
-/* ===== 刪除 ===== */
-function delLog(id){
-  logs[currentDate] = logs[currentDate].filter(i=>i.id!==id);
-  save(); render();
-}
-
-/* ===== 食物選單 ===== */
-function renderOptions(){
-  food-options.innerHTML = Object.keys(db)
-    .map(n=>`<option value="${n}">`).join("");
-}
-
-/* ===== PWA ===== */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js');
-}
+    init();
 </script>
 </body>
 </html>
