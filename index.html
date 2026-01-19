@@ -6,14 +6,39 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>🍎 飲食營養紀錄</title>
     <style>
-        :root { --primary: #4285f4; --success: #34a853; --danger: #ea4335; --bg: #f8f9fa; --text: #202124; }
+        :root { 
+            --primary: #4285f4; --success: #34a853; --danger: #ea4335; --bg: #f8f9fa; --text: #202124;
+            --zoom: 1; /* 縮放倍率變數 */
+        }
         
-        /* 避免瀏覽器對字體進行自動調整，確保縮放時佈局穩定 */
-        * { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+        body { 
+            font-family: -apple-system, sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; padding: 10px; 
+            display: flex; justify-content: center;
+            /* 透過 CSS 縮放整個容器 */
+            transform-origin: top center;
+        }
 
-        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 480px; background: white; padding: 20px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); box-sizing: border-box; min-height: 90vh; }
-        .header { text-align: center; font-size: 22px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .app-container { 
+            width: 100%; max-width: 480px; background: white; 
+            padding: 20px; border-radius: 24px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            box-sizing: border-box; min-height: 90vh;
+            zoom: var(--zoom); /* 針對大部分瀏覽器的縮放 */
+        }
+
+        .header-box {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+
+        .zoom-controls { display: flex; gap: 5px; }
+        .zoom-btn { 
+            background: #eee; border: none; padding: 5px 10px; 
+            border-radius: 8px; font-weight: bold; cursor: pointer; 
+        }
+
+        .header { font-size: 22px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px; }
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
         .stat-box { background: #f1f3f4; padding: 12px 5px; border-radius: 16px; text-align: center; }
         .stat-box b { font-size: 18px; color: var(--primary); display: block; }
@@ -34,13 +59,21 @@
 </head>
 <body>
 
-<div class="app-container">
-    <div class="header">🍎 今日飲食總覽</div>
+<div class="app-container" id="app-root">
+    <div class="header-box">
+        <h1 class="header">🍎 飲食紀錄</h1>
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="changeZoom(-0.1)">A-</button>
+            <button class="zoom-btn" onclick="changeZoom(0.1)">A+</button>
+        </div>
+    </div>
+
     <div class="dashboard">
         <div class="stat-box"><div>熱量</div><b id="total-cal">0</b></div>
         <div class="stat-box"><div>蛋白</div><b id="total-pro">0</b></div>
         <div class="stat-box"><div>碳水</div><b id="total-carb">0</b></div>
     </div>
+
     <div class="input-card">
         <input type="text" id="food-name" list="food-options" placeholder="🔍 搜尋或新增食物">
         <datalist id="food-options"></datalist>
@@ -54,10 +87,12 @@
         </div>
         <button class="btn btn-primary" onclick="addItem()">確認加入紀錄</button>
     </div>
+
     <div style="font-weight: bold; margin: 10px 5px;">📋 今日明細紀錄</div>
     <div id="log-list"></div>
+
     <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">
-        <button class="btn" style="background:transparent; color:#888; border:1px solid #ddd; font-size:13px;" onclick="clearDaily()">🗑 清除今日數據</button>
+        <button class="btn" style="background:transparent; color:#888; border:1px solid #ddd; font-size:13px;" onclick="clearDaily()">🗑 清除今日紀錄</button>
     </div>
 </div>
 
@@ -76,9 +111,11 @@
         "香蕉": [90, 1, 23], "芭樂": [40, 1, 10], "地瓜葉": [28, 3, 4], "高麗菜": [25, 1, 6]
     };
 
-    const DB_KEY = "FOOD_DB_LEARNED_V3";
-    const LOG_KEY = "DAILY_LOG_STORE_V3";
+    const DB_KEY = "FOOD_DB_V4";
+    const LOG_KEY = "DAILY_LOG_V4";
+    const ZOOM_KEY = "USER_ZOOM_LEVEL";
 
+    let currentZoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
     let state = {
         db: JSON.parse(localStorage.getItem(DB_KEY)) || INITIAL_DB,
         logs: [],
@@ -86,6 +123,7 @@
     };
 
     function init() {
+        applyZoom();
         const savedLog = localStorage.getItem(LOG_KEY);
         if (savedLog) {
             const parsed = JSON.parse(savedLog);
@@ -93,6 +131,17 @@
         }
         updateDatalist();
         render();
+    }
+
+    // 縮放控制
+    function changeZoom(delta) {
+        currentZoom = Math.min(Math.max(currentZoom + delta, 0.7), 1.5);
+        localStorage.setItem(ZOOM_KEY, currentZoom);
+        applyZoom();
+    }
+
+    function applyZoom() {
+        document.documentElement.style.setProperty('--zoom', currentZoom);
     }
 
     function save() {
@@ -147,7 +196,7 @@
         const dl = document.getElementById('food-options');
         dl.innerHTML = Object.keys(state.db).sort().map(n => `<option value="${n}">`).join("");
     }
-    function clearDaily() { if(confirm("確定清空今日紀錄？")) { state.logs = []; save(); render(); } }
+    function clearDaily() { if(confirm("確定清空今日數據？")) { state.logs = []; save(); render(); } }
     init();
 </script>
 </body>
