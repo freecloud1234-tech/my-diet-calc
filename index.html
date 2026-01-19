@@ -2,157 +2,33 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>🍎 飲食營養紀錄</title>
     <style>
-        :root { 
-            --primary: #4285f4; 
-            --success: #34a853; 
-            --danger: #ea4335;
-            --warning: #fbbc05;
-            --bg: #f8f9fa; 
-            --text: #202124;
-        }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text);
-            margin: 0; 
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .app-container { 
-            width: 100%;
-            max-width: 480px; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 24px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            box-sizing: border-box;
-            min-height: 90vh;
-        }
-
-        .header { 
-            text-align: center; 
-            font-size: 22px; 
-            font-weight: 800; 
-            margin-bottom: 20px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 8px;
-            color: #444;
-        }
-
-        /* 儀表板 */
-        .dashboard { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
-            margin-bottom: 25px; 
-            text-align: center; 
-        }
-        .stat-box {
-            background: #f1f3f4;
-            padding: 12px 5px;
-            border-radius: 16px;
-            transition: transform 0.2s;
-        }
-        .stat-box:active { transform: scale(0.95); }
-        .stat-box div { font-size: 12px; color: #5f6368; margin-bottom: 4px; }
+        :root { --primary: #4285f4; --success: #34a853; --danger: #ea4335; --bg: #f8f9fa; --text: #202124; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 480px; background: white; padding: 20px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); box-sizing: border-box; min-height: 90vh; }
+        .header { text-align: center; font-size: 22px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
+        .stat-box { background: #f1f3f4; padding: 12px 5px; border-radius: 16px; text-align: center; }
+        .stat-box div { font-size: 12px; color: #5f6368; }
         .stat-box b { font-size: 18px; color: var(--primary); display: block; }
-
-        /* 輸入區塊 */
-        .input-card { 
-            background: #fff; 
-            border: 1.5px solid #eee; 
-            padding: 16px; 
-            border-radius: 18px; 
-            margin-bottom: 20px;
-        }
-        input, select { 
-            width: 100%; 
-            padding: 14px; 
-            margin-top: 10px; 
-            border-radius: 12px; 
-            border: 1px solid #dadce0; 
-            font-size: 16px; 
-            box-sizing: border-box;
-            outline: none;
-            background: #fafafa;
-        }
-        input:focus { border-color: var(--primary); background: white; }
-        
-        .btn { 
-            width: 100%; 
-            padding: 15px; 
-            border-radius: 14px; 
-            border: none; 
-            font-weight: bold; 
-            font-size: 16px; 
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
-        }
+        .input-card { border: 1.5px solid #eee; padding: 16px; border-radius: 18px; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 14px; margin-top: 10px; border-radius: 12px; border: 1px solid #dadce0; font-size: 16px; box-sizing: border-box; outline: none; }
+        .btn { width: 100%; padding: 15px; border-radius: 14px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
         .btn-primary { background: var(--primary); color: white; margin-top: 15px; }
-        .btn-primary:active { background: #1a73e8; transform: translateY(2px); }
-
-        /* 列表項目 */
-        .list-title { 
-            font-size: 17px; 
-            font-weight: 700; 
-            margin: 20px 0 12px 5px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .log-item { 
-            background: white; 
-            border: 1px solid #efefef; 
-            padding: 14px; 
-            border-radius: 16px; 
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
+        .log-item { background: white; border: 1px solid #efefef; padding: 14px; border-radius: 16px; margin-bottom: 12px; }
         .item-main { display: flex; justify-content: space-between; align-items: center; }
-        .item-info b { font-size: 16px; color: #3c4043; }
         .item-meta { font-size: 13px; color: #70757a; margin-top: 5px; }
-        
         .action-group { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-sm { 
-            padding: 8px 14px; 
-            font-size: 12px; 
-            border-radius: 8px; 
-            border: none; 
-            cursor: pointer;
-            flex: 1;
-        }
+        .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 8px; border: none; flex: 1; cursor: pointer; }
         .edit-btn { background: #e8f0fe; color: var(--primary); }
         .del-btn { background: #fce8e6; color: var(--danger); }
-        .save-btn { background: var(--success); color: white; width: 100%; }
-
-        .edit-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            margin-top: 10px;
-        }
+        .save-btn { background: var(--success); color: white; width: 100%; margin-top: 10px; }
+        .edit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
         .edit-grid input { padding: 8px; font-size: 13px; margin-top: 0; }
-
-        .footer-action { margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; }
-        .btn-outline { background: transparent; color: #5f6368; border: 1px solid #dadce0; font-size: 13px; }
-
-        /* 針對窄螢幕微調 */
-        @media (max-width: 360px) {
-            .app-container { padding: 15px; }
-            .stat-box b { font-size: 16px; }
-        }
     </style>
 </head>
 <body>
@@ -177,23 +53,24 @@
                 <option value="碗">碗(200g)</option>
             </select>
         </div>
-        <button class="btn btn-primary" onclick="addItem()">確認加入紀錄</button>
+        <button class="btn btn-primary" onclick="addItem()">確認加入今日紀錄</button>
     </div>
 
-    <div class="list-title">📋 今日明細紀錄</div>
+    <div style="font-weight: bold; margin: 10px 5px;">📋 今日明細紀錄</div>
     <div id="log-list"></div>
 
-    <div class="footer-action">
-        <button class="btn btn-outline" onclick="clearDaily()">🗑 清除今日數據</button>
+    <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">
+        <button class="btn" style="background:transparent; color:#888; border:1px solid #ddd; font-size:13px;" onclick="clearDaily()">🗑 清除今日數據</button>
     </div>
 </div>
 
 <script>
+    // 您指定的內建完整數據
     const INITIAL_DB = {
         "荷包蛋": [106, 7, 0.5], "茶葉蛋": [75, 7, 1], "水煮蛋": [75, 7, 1],
         "煎蛋吐司(去邊不加醬)": [280, 12, 35], "里肌蛋吐司(去邊不加醬)": [350, 22, 36], "肉鬆蛋吐司(去邊不加醬)": [380, 15, 42],
         "原味蛋餅": [260, 10, 30], "豬排蛋餅": [420, 22, 32], "肉鬆蛋餅": [350, 14, 38], "豬排蛋漢堡": [480, 24, 45],
-        "黑胡椒鐵板麵": [650, 18, 85], "控肉掛包": [450, 18, 50], "無糖豆漿": [35, 3.5, 1],
+        "黑胡椒鐵板麵": [650, 18, 85], "控肉掛包": [450, 18, 50], "無糖豆漿": [35, 3.5, 1], "義美厚濃黑豆奶": [60, 5, 4],
         "薯泥丹麥吐司": [420, 8, 55], "鮪魚沙拉丹麥吐司": [450, 16, 48], "起司蛋丹麥吐司": [400, 14, 40],
         "壽喜牛五花餐盒": [650, 28, 75], "麻婆牛五花餐盒": [700, 25, 80], "鱸魚餐盒": [550, 35, 70],
         "青蔥海鹽雞胸肉餐盒": [500, 40, 65], "五香藥膳嫩雞腿餐盒": [620, 32, 68], "打拋牛餐盒": [680, 30, 75], "火烤挪威鯖魚餐盒": [650, 30, 70],
@@ -203,8 +80,8 @@
         "香蕉": [90, 1, 23], "芭樂": [40, 1, 10], "地瓜葉": [28, 3, 4], "高麗菜": [25, 1, 6]
     };
 
-    const DB_KEY = "PRIVATE_FOOD_DB";
-    const LOG_KEY = "PRIVATE_DAILY_LOG";
+    const DB_KEY = "FOOD_DB_LEARNED_V2";
+    const LOG_KEY = "DAILY_LOG_STORE_V2";
 
     let state = {
         db: JSON.parse(localStorage.getItem(DB_KEY)) || INITIAL_DB,
@@ -231,9 +108,9 @@
         const name = document.getElementById('food-name').value.trim();
         const amount = parseFloat(document.getElementById('food-amount').value);
         const unit = document.getElementById('food-unit').value;
-
         if (!name || isNaN(amount)) return;
-
+        
+        // 如果是新食物，預設為 0
         if (!state.db[name]) {
             state.db[name] = [0, 0, 0];
             updateDatalist();
@@ -250,7 +127,6 @@
             cb: (base[2] * ratio).toFixed(1),
             isEditing: false
         });
-
         save(); render();
         document.getElementById('food-name').value = "";
         document.getElementById('food-amount').value = "";
@@ -260,10 +136,8 @@
         const list = document.getElementById('log-list');
         list.innerHTML = "";
         let tc = 0, tp = 0, tcb = 0;
-
         state.logs.forEach((item, index) => {
             tc += parseFloat(item.c); tp += parseFloat(item.p); tcb += parseFloat(item.cb);
-            
             if (item.isEditing) {
                 list.innerHTML += `
                 <div class="log-item">
@@ -273,15 +147,15 @@
                         <input type="number" id="e-p-${index}" value="${item.p}">
                         <input type="number" id="e-cb-${index}" value="${item.cb}">
                     </div>
-                    <button class="btn btn-sm save-btn" onclick="saveEdit(${index})">✅ 完成儲存並學起來</button>
+                    <button class="btn btn-sm save-btn" onclick="saveEdit(${index})">✅ 儲存數據並學起來</button>
                 </div>`;
             } else {
                 list.innerHTML += `
                 <div class="log-item">
                     <div class="item-main">
                         <div class="item-info">
-                            <b>${item.name}</b> <small style="color:#888">${item.amount}${item.unit}</small>
-                            <div class="item-meta">🔥 ${item.c} kcal / P: ${item.p} / C: ${item.cb}</div>
+                            <b>${item.name}</b> <small>${item.amount}${item.unit}</small>
+                            <div class="item-meta">🔥 ${item.c} kcal | P: ${item.p} | C: ${item.cb}</div>
                         </div>
                     </div>
                     <div class="action-group">
@@ -291,48 +165,36 @@
                 </div>`;
             }
         });
-
         document.getElementById('total-cal').innerText = Math.round(tc);
         document.getElementById('total-pro').innerText = tp.toFixed(1);
         document.getElementById('total-carb').innerText = tcb.toFixed(1);
     }
 
-    function toggleEdit(index) {
-        state.logs[index].isEditing = true;
-        render();
-    }
+    function toggleEdit(index) { state.logs[index].isEditing = true; render(); }
 
     function saveEdit(index) {
         const item = state.logs[index];
-        const newC = parseFloat(document.getElementById(`e-c-${index}`).value);
-        const newP = parseFloat(document.getElementById(`e-p-${index}`).value);
-        const newCb = parseFloat(document.getElementById(`e-cb-${index}`).value);
-
-        item.c = newC; item.p = newP; item.cb = newCb;
+        const nc = parseFloat(document.getElementById(`e-c-${index}`).value);
+        const np = parseFloat(document.getElementById(`e-p-${index}`).value);
+        const ncb = parseFloat(document.getElementById(`e-cb-${index}`).value);
+        item.c = nc; item.p = np; item.cb = ncb;
         item.isEditing = false;
 
+        // 核心功能：學習並更新資料庫
         let ratio = (item.unit === "碗") ? item.amount * 2 : (item.unit === "g" ? item.amount / 100 : item.amount);
-        state.db[item.name] = [ (newC / ratio).toFixed(1), (newP / ratio).toFixed(1), (newCb / ratio).toFixed(1) ];
+        state.db[item.name] = [ (nc / ratio).toFixed(1), (np / ratio).toFixed(1), (ncb / ratio).toFixed(1) ];
 
         save(); render();
     }
 
-    function del(index) {
-        state.logs.splice(index, 1);
-        save(); render();
-    }
+    function del(index) { state.logs.splice(index, 1); save(); render(); }
 
     function updateDatalist() {
         const dl = document.getElementById('food-options');
         dl.innerHTML = Object.keys(state.db).sort().map(n => `<option value="${n}">`).join("");
     }
 
-    function clearDaily() {
-        if(confirm("確定清空今日明細？")) {
-            state.logs = [];
-            save(); render();
-        }
-    }
+    function clearDaily() { if(confirm("確定清空今日所有紀錄？")) { state.logs = []; save(); render(); } }
 
     init();
 </script>
