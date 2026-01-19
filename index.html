@@ -4,23 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>🍎 飲食營養紀錄</title>
     <style>
         :root { --primary: #4285f4; --success: #34a853; --danger: #ea4335; --bg: #f8f9fa; --text: #202124; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        
+        /* 避免瀏覽器對字體進行自動調整，確保縮放時佈局穩定 */
+        * { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 480px; background: white; padding: 20px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); box-sizing: border-box; min-height: 90vh; }
         .header { text-align: center; font-size: 22px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
         .stat-box { background: #f1f3f4; padding: 12px 5px; border-radius: 16px; text-align: center; }
-        .stat-box div { font-size: 12px; color: #5f6368; }
         .stat-box b { font-size: 18px; color: var(--primary); display: block; }
         .input-card { border: 1.5px solid #eee; padding: 16px; border-radius: 18px; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 14px; margin-top: 10px; border-radius: 12px; border: 1px solid #dadce0; font-size: 16px; box-sizing: border-box; outline: none; }
+        input, select { width: 100%; padding: 14px; margin-top: 10px; border-radius: 12px; border: 1px solid #dadce0; font-size: 16px; box-sizing: border-box; }
         .btn { width: 100%; padding: 15px; border-radius: 14px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
         .btn-primary { background: var(--primary); color: white; margin-top: 15px; }
         .log-item { background: white; border: 1px solid #efefef; padding: 14px; border-radius: 16px; margin-bottom: 12px; }
-        .item-main { display: flex; justify-content: space-between; align-items: center; }
         .item-meta { font-size: 13px; color: #70757a; margin-top: 5px; }
         .action-group { display: flex; gap: 8px; margin-top: 10px; }
         .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 8px; border: none; flex: 1; cursor: pointer; }
@@ -35,13 +36,11 @@
 
 <div class="app-container">
     <div class="header">🍎 今日飲食總覽</div>
-    
     <div class="dashboard">
         <div class="stat-box"><div>熱量</div><b id="total-cal">0</b></div>
         <div class="stat-box"><div>蛋白</div><b id="total-pro">0</b></div>
         <div class="stat-box"><div>碳水</div><b id="total-carb">0</b></div>
     </div>
-
     <div class="input-card">
         <input type="text" id="food-name" list="food-options" placeholder="🔍 搜尋或新增食物">
         <datalist id="food-options"></datalist>
@@ -53,19 +52,16 @@
                 <option value="碗">碗(200g)</option>
             </select>
         </div>
-        <button class="btn btn-primary" onclick="addItem()">確認加入今日紀錄</button>
+        <button class="btn btn-primary" onclick="addItem()">確認加入紀錄</button>
     </div>
-
     <div style="font-weight: bold; margin: 10px 5px;">📋 今日明細紀錄</div>
     <div id="log-list"></div>
-
     <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">
         <button class="btn" style="background:transparent; color:#888; border:1px solid #ddd; font-size:13px;" onclick="clearDaily()">🗑 清除今日數據</button>
     </div>
 </div>
 
 <script>
-    // 您指定的內建完整數據
     const INITIAL_DB = {
         "荷包蛋": [106, 7, 0.5], "茶葉蛋": [75, 7, 1], "水煮蛋": [75, 7, 1],
         "煎蛋吐司(去邊不加醬)": [280, 12, 35], "里肌蛋吐司(去邊不加醬)": [350, 22, 36], "肉鬆蛋吐司(去邊不加醬)": [380, 15, 42],
@@ -80,8 +76,8 @@
         "香蕉": [90, 1, 23], "芭樂": [40, 1, 10], "地瓜葉": [28, 3, 4], "高麗菜": [25, 1, 6]
     };
 
-    const DB_KEY = "FOOD_DB_LEARNED_V2";
-    const LOG_KEY = "DAILY_LOG_STORE_V2";
+    const DB_KEY = "FOOD_DB_LEARNED_V3";
+    const LOG_KEY = "DAILY_LOG_STORE_V3";
 
     let state = {
         db: JSON.parse(localStorage.getItem(DB_KEY)) || INITIAL_DB,
@@ -109,24 +105,10 @@
         const amount = parseFloat(document.getElementById('food-amount').value);
         const unit = document.getElementById('food-unit').value;
         if (!name || isNaN(amount)) return;
-        
-        // 如果是新食物，預設為 0
-        if (!state.db[name]) {
-            state.db[name] = [0, 0, 0];
-            updateDatalist();
-        }
-
+        if (!state.db[name]) { state.db[name] = [0, 0, 0]; updateDatalist(); }
         const base = state.db[name];
         let ratio = (unit === "碗") ? amount * 2 : (unit === "g" ? amount / 100 : amount);
-
-        state.logs.push({
-            id: Date.now(),
-            name, amount, unit,
-            c: Math.round(base[0] * ratio),
-            p: (base[1] * ratio).toFixed(1),
-            cb: (base[2] * ratio).toFixed(1),
-            isEditing: false
-        });
+        state.logs.push({ id: Date.now(), name, amount, unit, c: Math.round(base[0] * ratio), p: (base[1] * ratio).toFixed(1), cb: (base[2] * ratio).toFixed(1), isEditing: false });
         save(); render();
         document.getElementById('food-name').value = "";
         document.getElementById('food-amount').value = "";
@@ -139,30 +121,9 @@
         state.logs.forEach((item, index) => {
             tc += parseFloat(item.c); tp += parseFloat(item.p); tcb += parseFloat(item.cb);
             if (item.isEditing) {
-                list.innerHTML += `
-                <div class="log-item">
-                    <b>編輯：${item.name}</b>
-                    <div class="edit-grid">
-                        <input type="number" id="e-c-${index}" value="${item.c}">
-                        <input type="number" id="e-p-${index}" value="${item.p}">
-                        <input type="number" id="e-cb-${index}" value="${item.cb}">
-                    </div>
-                    <button class="btn btn-sm save-btn" onclick="saveEdit(${index})">✅ 儲存數據並學起來</button>
-                </div>`;
+                list.innerHTML += `<div class="log-item"><b>編輯：${item.name}</b><div class="edit-grid"><input type="number" id="e-c-${index}" value="${item.c}"><input type="number" id="e-p-${index}" value="${item.p}"><input type="number" id="e-cb-${index}" value="${item.cb}"></div><button class="btn btn-sm save-btn" onclick="saveEdit(${index})">✅ 儲存數據</button></div>`;
             } else {
-                list.innerHTML += `
-                <div class="log-item">
-                    <div class="item-main">
-                        <div class="item-info">
-                            <b>${item.name}</b> <small>${item.amount}${item.unit}</small>
-                            <div class="item-meta">🔥 ${item.c} kcal | P: ${item.p} | C: ${item.cb}</div>
-                        </div>
-                    </div>
-                    <div class="action-group">
-                        <button class="btn-sm edit-btn" onclick="toggleEdit(${index})">修改數據</button>
-                        <button class="btn-sm del-btn" onclick="del(${index})">刪除</button>
-                    </div>
-                </div>`;
+                list.innerHTML += `<div class="log-item"><div class="item-main"><div><b>${item.name}</b> <small>${item.amount}${item.unit}</small><div class="item-meta">🔥 ${item.c} | P: ${item.p} | C: ${item.cb}</div></div></div><div class="action-group"><button class="btn-sm edit-btn" onclick="toggleEdit(${index})">修改</button><button class="btn-sm del-btn" onclick="del(${index})">刪除</button></div></div>`;
             }
         });
         document.getElementById('total-cal').innerText = Math.round(tc);
@@ -171,31 +132,22 @@
     }
 
     function toggleEdit(index) { state.logs[index].isEditing = true; render(); }
-
     function saveEdit(index) {
         const item = state.logs[index];
         const nc = parseFloat(document.getElementById(`e-c-${index}`).value);
         const np = parseFloat(document.getElementById(`e-p-${index}`).value);
         const ncb = parseFloat(document.getElementById(`e-cb-${index}`).value);
-        item.c = nc; item.p = np; item.cb = ncb;
-        item.isEditing = false;
-
-        // 核心功能：學習並更新資料庫
-        let ratio = (item.unit === "碗") ? item.amount * 2 : (item.unit === "g" ? item.amount / 100 : item.amount);
-        state.db[item.name] = [ (nc / ratio).toFixed(1), (np / ratio).toFixed(1), (ncb / ratio).toFixed(1) ];
-
+        item.c = nc; item.p = np; item.cb = ncb; item.isEditing = false;
+        let r = (item.unit === "碗") ? item.amount * 2 : (item.unit === "g" ? item.amount / 100 : item.amount);
+        state.db[item.name] = [ (nc/r).toFixed(1), (np/r).toFixed(1), (ncb/r).toFixed(1) ];
         save(); render();
     }
-
     function del(index) { state.logs.splice(index, 1); save(); render(); }
-
     function updateDatalist() {
         const dl = document.getElementById('food-options');
         dl.innerHTML = Object.keys(state.db).sort().map(n => `<option value="${n}">`).join("");
     }
-
-    function clearDaily() { if(confirm("確定清空今日所有紀錄？")) { state.logs = []; save(); render(); } }
-
+    function clearDaily() { if(confirm("確定清空今日紀錄？")) { state.logs = []; save(); render(); } }
     init();
 </script>
 </body>
